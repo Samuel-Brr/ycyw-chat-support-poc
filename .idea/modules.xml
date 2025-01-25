@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/ycyw.iml" filepath="$PROJECT_DIR$/.idea/ycyw.iml" />
+      <module fileurl="file://$PROJECT_DIR$/your-car-your-way-frontend/your-car-your-way-frontend.iml" filepath="$PROJECT_DIR$/your-car-your-way-frontend/your-car-your-way-frontend.iml" />
+    </modules>
+  </component>
+</project>
