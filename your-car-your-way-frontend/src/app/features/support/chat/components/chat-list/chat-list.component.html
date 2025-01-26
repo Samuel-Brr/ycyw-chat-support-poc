@@ -1,0 +1,81 @@
+<div class="chat-list-container">
+  <!-- Header Section -->
+  <mat-card class="header-card">
+    <div class="header-content">
+      <h1>Support Conversations</h1>
+      <button mat-raised-button 
+              color="primary" 
+              (click)="startNewChat()"
+              [disabled]="!isConnected">
+        <mat-icon>add</mat-icon>
+        New Chat
+      </button>
+    </div>
+
+    <div class="filters-row">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search conversations</mat-label>
+        <input matInput
+               [(ngModel)]="searchQuery"
+               (ngModelChange)="onSearch($event)"
+               placeholder="Search by message or agent name">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+
+      <mat-button-toggle-group [value]="selectedFilter" (change)="onFilterChange($event.value)">
+        <mat-button-toggle value="all">All</mat-button-toggle>
+        <mat-button-toggle value="active">Active</mat-button-toggle>
+        <mat-button-toggle value="resolved">Resolved</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </mat-card>
+
+  <!-- Status Summary Section -->
+  <div class="status-summary">
+    <div class="status-item">
+      <mat-icon [class.connected]="isConnected">{{ isConnected ? 'cloud_done' : 'cloud_off' }}</mat-icon>
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </div>
+    <div class="status-item">
+      <mat-icon>forum</mat-icon>
+      {{ getStatusSummary().active }} Active Conversations
+    </div>
+    <div class="status-item" *ngIf="getStatusSummary().unread > 0">
+      <mat-icon>mark_email_unread</mat-icon>
+      {{ getStatusSummary().unread }} Unread Messages
+    </div>
+  </div>
+
+  <!-- Chat List Container -->
+  <div class="conversations-container">
+    <ng-container *ngIf="!isLoading && !error; else loadingOrError">
+      <ng-container *ngIf="filteredConversations.length > 0; else noConversations">
+        <app-chat-preview
+          *ngFor="let conversation of filteredConversations"
+          [conversation]="conversation"
+          (click)="openChat(conversation.id)"
+          class="conversation-item">
+        </app-chat-preview>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #loadingOrError>
+      <div class="center-message">
+        <mat-spinner *ngIf="isLoading" diameter="40"></mat-spinner>
+        <div *ngIf="error" class="error-message">
+          <mat-icon>error_outline</mat-icon>
+          <p>{{ error }}</p>
+          <button mat-button color="primary" (click)="ngOnInit()">Retry</button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #noConversations>
+      <div class="center-message">
+        <mat-icon>forum</mat-icon>
+        <p>No conversations found</p>
+        <button mat-button color="primary" (click)="startNewChat()">Start a new conversation</button>
+      </div>
+    </ng-template>
+  </div>
+</div> 

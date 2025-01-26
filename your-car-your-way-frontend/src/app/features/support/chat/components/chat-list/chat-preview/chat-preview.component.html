@@ -1,0 +1,26 @@
+<mat-card class="preview-card" [class.has-unread]="conversation.unreadCount > 0">
+  <div class="preview-content">
+    <div class="preview-header">
+      <mat-chip-set>
+        <mat-chip [color]="getStatusColor()">
+          {{ getStatusLabel() }}
+        </mat-chip>
+      </mat-chip-set>
+      <span class="timestamp">{{ getRelativeTime(conversation.lastMessage.timestamp) }}</span>
+    </div>
+
+    <div class="preview-body">
+      <div class="agent-info" *ngIf="conversation.agentName">
+        <mat-icon>support_agent</mat-icon>
+        <span>{{ conversation.agentName }}</span>
+      </div>
+      <p class="message-preview">{{ conversation.lastMessage.content }}</p>
+    </div>
+
+    <div class="preview-footer" *ngIf="conversation.unreadCount > 0">
+      <mat-chip color="accent">
+        {{ conversation.unreadCount }} new {{ conversation.unreadCount === 1 ? 'message' : 'messages' }}
+      </mat-chip>
+    </div>
+  </div>
+</mat-card>
