@@ -1,160 +1,75 @@
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay, tap } from 'rxjs/operators';
-import { ChatPreview, ChatMessage } from '../models/chat.models';
+import {Injectable} from '@angular/core';
+import {map, Observable} from 'rxjs';
+import {ChatMessage, ChatMessages, SupportRequests} from '../models/chat.models';
+import {HttpClient} from '@angular/common/http';
+import {RxStomp} from '@stomp/rx-stomp';
+import {Message} from '@stomp/stompjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChatService {
-  private connectionStatus = new BehaviorSubject<boolean>(false);
-  connectionStatus$ = this.connectionStatus.asObservable();
+  private readonly API_URL = 'http://localhost:3003/api';
+  private rxStomp: RxStomp;
 
-  // Keep track of current chat
-  private currentChat = new BehaviorSubject<ChatMessage[]>([]);
-  currentChat$ = this.currentChat.asObservable();
-
-  constructor() {
-    // Simulate initial connection
-    setTimeout(() => this.connectionStatus.next(true), 1000);
+  constructor(private http: HttpClient) {
+    this.rxStomp = new RxStomp();
+    this.rxStomp.configure({
+      brokerURL: 'ws://localhost:3003/api/chat',
+      connectHeaders: {
+        'Authorization': `Bearer ${this.getAuthToken()}`
+      }
+    });
+    this.rxStomp.activate();
   }
 
-  getConversations(): Observable<ChatPreview[]> {
-    return of(this.getMockConversations()).pipe(
-      delay(1000), // Simulate network delay
-      tap(() => {
-        if (!this.connectionStatus.value) {
-          throw new Error('Not connected to chat service');
-        }
-      })
+  getSupportRequestPreviews(): Observable<SupportRequests> {
+    const userId = localStorage.getItem('user_id');
+    return this.http.get<SupportRequests>(`${this.API_URL}/support_requests/user/${userId}`);
+  }
+
+  // Get message history through REST API
+  getMessageHistory(support_requestId: string): Observable<ChatMessages> {
+    return this.http.get<ChatMessages>(`${this.API_URL}/support_requests/${support_requestId}/messages`);
+  }
+
+  // Subscribe to new messages through WebSocket
+  subscribeToNewMessages(sessionId: string): Observable<ChatMessage> {
+    return this.rxStomp.watch(`/topic/chat/${sessionId}`).pipe(
+      map(message => JSON.parse(message.body))
     );
+  }
+
+  sendMessage(sessionId: string, content: string): void {
+    // Send message to the same endpoint we're listening to
+    this.rxStomp.publish({
+      destination: `/app/chat/${sessionId}`,
+      body: JSON.stringify({
+        content: content,
+        timestamp: new Date(),
+        // Add other message properties
+      })
+    });
   }
 
   startNewChat(): Observable<number> {
-    // Simulate creating a new chat and returning its ID
-    return of(Math.floor(Math.random() * 1000) + 1).pipe(delay(500));
+    const userId = localStorage.getItem('user_id');
+    return new Observable(observer => {
+      this.rxStomp.watch('/user/queue/chat.created')
+        .subscribe((message: Message) => {
+          const response = JSON.parse(message.body);
+          observer.next(response.chatId);
+          observer.complete();
+        });
+
+      this.rxStomp.publish({
+        destination: '/app/chat.create',
+        body: JSON.stringify({ userId })
+      });
+    });
   }
 
-  getChatSessionById(chatSessionId: string): Observable<ChatMessage[]> {
-    // Simulate loading chat messages
-    return of(this.getMockChatMessages()).pipe(
-      delay(1000),
-      tap(messages => this.currentChat.next(messages))
-    );
-  }
-
-  sendMessage(content: string): Observable<ChatMessage> {
-    const newMessage: ChatMessage = {
-      id: Math.floor(Math.random() * 1000),
-      content,
-      sender: 2,
-      timestamp: new Date(),
-      status: 'SENDING'
-    };
-
-    // Add message to current chat
-    const currentMessages = this.currentChat.value;
-    this.currentChat.next([...currentMessages, newMessage]);
-
-    // Simulate message sending
-    return of(newMessage).pipe(
-      delay(1000),
-      tap(() => {
-        newMessage.status = 'SENT';
-        this.currentChat.next([...this.currentChat.value]);
-
-        // Simulate delivery status
-        setTimeout(() => {
-          newMessage.status = 'DELIVERED';
-          this.currentChat.next([...this.currentChat.value]);
-
-          // Simulate agent response
-          setTimeout(() => {
-            const agentResponse: ChatMessage = {
-              id: Math.floor(Math.random() * 1000),
-              content: this.getRandomAgentResponse(),
-              sender: 1,
-              timestamp: new Date(),
-              status: 'READ'
-            };
-            this.currentChat.next([...this.currentChat.value, agentResponse]);
-          }, 2000);
-        }, 1000);
-      })
-    );
-  }
-
-  private getMockConversations(): ChatPreview[] {
-    return [
-      {
-        id: 1,
-        status: 'IN_PROGRESS',
-        agentName: 'John Smith',
-        lastMessage: {
-          id: 1,
-          content: 'I understand your concern. Let me check that for you...',
-          timestamp: new Date(Date.now() - 5 * 60000),
-          sender: 1,
-          status: 'READ'
-        },
-        unreadCount: 2
-      },
-      {
-        id: 2,
-        status: 'NEW',
-        lastMessage: {
-          id: 2,
-          content: 'Hello, I need help with my order #12345',
-          timestamp: new Date(Date.now() - 15 * 60000),
-          sender: 2,
-          status: 'DELIVERED'
-        },
-        unreadCount: 0
-      },
-      {
-        id: 3,
-        status: 'RESOLVED',
-        agentName: 'Sarah Johnson',
-        lastMessage: {
-          id: 3,
-          content: 'Is there anything else I can help you with?',
-          timestamp: new Date(Date.now() - 24 * 60 * 60000),
-          sender: 1,
-          status: 'READ'
-        },
-        unreadCount: 0
-      }
-    ];
-  }
-
-  private getMockChatMessages(): ChatMessage[] {
-    return [
-      {
-        id: 1,
-        content: 'Hello, how can I help you today?',
-        sender: 2,
-        timestamp: new Date(Date.now() - 5 * 60000),
-        status: 'READ'
-      },
-      {
-        id: 2,
-        content: 'I have a question about my recent order',
-        sender: 1,
-        timestamp: new Date(Date.now() - 4 * 60000),
-        status: 'DELIVERED'
-      }
-    ];
-  }
-
-  private getRandomAgentResponse(): string {
-    const responses = [
-      'I understand your concern. Let me check that for you...',
-      'Thank you for providing that information. How else can I assist you?',
-      'Ill be happy to help you with that.',
-      'Could you please provide more details about your issue?',
-      'Im looking into this right now.',
-      'Is there anything else you like to know?'
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+  private getAuthToken() {
+    return localStorage.getItem('TOKEN');
   }
 }

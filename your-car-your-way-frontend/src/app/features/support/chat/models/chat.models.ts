@@ -6,6 +6,10 @@ export interface ChatPreview {
   unreadCount: number;
 }
 
+export interface SupportRequests {
+  support_requests: ChatPreview[];
+}
+
 export interface ChatMessage {
   id: number;
   content: string;
@@ -13,6 +17,10 @@ export interface ChatMessage {
   sender: number;
   status: MessageStatus;
   isNew?: boolean;
+}
+
+export interface ChatMessages {
+  payload: ChatMessage[];
 }
 
 export type ChatStatus = 'NEW' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';

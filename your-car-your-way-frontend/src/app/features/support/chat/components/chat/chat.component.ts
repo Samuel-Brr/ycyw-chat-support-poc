@@ -8,7 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Subject } from 'rxjs';
+import {concatMap, Subject} from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { ChatMessageComponent } from './chat-message/chat-message.component';
@@ -37,34 +37,22 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   messages: ChatMessage[] = [];
   newMessage: string = '';
-  isConnected: boolean = false;
-  isLoading: boolean = true;
   isSending: boolean = false;
   error: string | null = null;
   agentName: string | null = null;
+  supportRequestId: string = '';
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private route: ActivatedRoute,
     private chatService: ChatService
-  ) {}
+  ) {
+    this.supportRequestId = this.route.snapshot.paramMap.get('id')!;
+  }
 
   ngOnInit() {
-    this.chatService.connectionStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(status => {
-        this.isConnected = status;
-        if (status) {
-          this.loadChat();
-        }
-      });
-
-    this.chatService.currentChat$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(messages => {
-        this.messages = messages;
-      });
+    this.loadChatHistoryAndSubscribeToNewMessage();
   }
 
   ngOnDestroy() {
@@ -76,48 +64,26 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.scrollToBottom();
   }
 
-  loadChat() {
-    const chatSessionId = this.route.snapshot.paramMap.get('id');
-    if (!chatSessionId) {
-      this.error = 'Invalid chat ID';
-      this.isLoading = false;
-      return;
-    }
-
-    this.isLoading = true;
-    this.error = null;
-
-    this.chatService.getChatSessionById(chatSessionId)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (messages) => {
-          this.isLoading = false;
-        },
-        error: (err) => {
-          this.error = 'Failed to load chat messages';
-          this.isLoading = false;
-          console.error('Error loading chat:', err);
-        }
+  loadChatHistoryAndSubscribeToNewMessage() {
+    // First, load message history
+    this.chatService.getMessageHistory(this.supportRequestId)
+      .pipe(
+        // After loading history, start listening for new messages
+        concatMap(history => {
+          this.messages = history.payload;
+          return this.chatService.subscribeToNewMessages(this.supportRequestId);
+        })
+      )
+      .subscribe(newMessage => {
+        this.messages.push(newMessage);
       });
   }
 
   sendMessage() {
-    if (this.newMessage.trim() && !this.isSending) {
-      this.isSending = true;
-
-      this.chatService.sendMessage(this.newMessage.trim())
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.newMessage = '';
-            this.isSending = false;
-          },
-          error: (err) => {
-            this.error = 'Failed to send message';
-            this.isSending = false;
-            console.error('Error sending message:', err);
-          }
-        });
+    if (this.newMessage.trim()) {
+      // Send the message through the same WebSocket connection
+      this.chatService.sendMessage(this.supportRequestId, this.newMessage);
+      this.newMessage = '';
     }
   }
 

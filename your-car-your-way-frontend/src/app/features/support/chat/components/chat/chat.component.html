@@ -9,16 +9,12 @@
 
     <!-- Messages Container -->
     <mat-card-content #scrollContainer class="messages-container">
-      <div class="messages" [class.loading]="isLoading">
+      <div class="messages">
         <app-chat-message
           *ngFor="let message of messages"
           [message]="message"
           [class.new-message]="message.isNew">
         </app-chat-message>
-
-        <div *ngIf="isLoading" class="loading-indicator">
-          <mat-spinner diameter="40"></mat-spinner>
-        </div>
 
         <div *ngIf="error" class="error-message">
           <mat-icon>error_outline</mat-icon>
@@ -36,13 +32,12 @@
         <input matInput
                [(ngModel)]="newMessage"
                placeholder="Type your message..."
-               [disabled]="!isConnected || isSending"
+               [disabled]="isSending"
                (keyup.enter)="sendMessage()">
-        <mat-hint *ngIf="!isConnected">Waiting for connection...</mat-hint>
       </mat-form-field>
       <button mat-fab
               color="primary"
-              [disabled]="!isConnected || !newMessage.trim() || isSending"
+              [disabled]="!newMessage.trim() || isSending"
               (click)="sendMessage()">
         <mat-icon>{{ isSending ? 'hourglass_empty' : 'send' }}</mat-icon>
       </button>

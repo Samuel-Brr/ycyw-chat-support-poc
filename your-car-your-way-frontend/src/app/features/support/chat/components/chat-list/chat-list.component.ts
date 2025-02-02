@@ -55,15 +55,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Subscribe to connection status
-    this.chatService.connectionStatus$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(status => {
-        this.isConnected = status;
-        if (status) {
-          this.loadConversations();
-        }
-      });
+    this.loadConversations();
   }
 
   ngOnDestroy() {
@@ -75,11 +67,11 @@ export class ChatListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.chatService.getConversations()
+    this.chatService.getSupportRequestPreviews()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (conversations) => {
-          this.conversations = conversations;
+          this.conversations = conversations.support_requests;
           this.filterConversations();
           this.isLoading = false;
         },
@@ -102,7 +94,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
 
     if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(conv => 
+      filtered = filtered.filter(conv =>
         conv.lastMessage.content.toLowerCase().includes(query) ||
         (conv.agentName && conv.agentName.toLowerCase().includes(query))
       );
