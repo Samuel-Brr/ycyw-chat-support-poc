@@ -1,15 +1,15 @@
-<div class="message-container" [ngClass]="{'user-message': message.sender === 'user'}">
+<div class="message-container" [ngClass]="{'user-message': isCurrentUser(message)}">
   <div class="message-bubble">
     <div class="message-content">{{ message.content }}</div>
     <div class="message-info">
       <span class="message-time">{{ message.timestamp | date:'shortTime' }}</span>
-      <span class="message-status" *ngIf="message.sender === 'user'">
+      <span class="message-status" *ngIf="isCurrentUser(message)">
         <mat-icon [ngClass]="message.status.toLowerCase()">
-          {{ message.status === 'SENT' ? 'check' : 
-             message.status === 'DELIVERED' ? 'done_all' : 
+          {{ message.status === 'SENT' ? 'check' :
+             message.status === 'DELIVERED' ? 'done_all' :
              'done_all' }}
         </mat-icon>
       </span>
     </div>
   </div>
-</div> 
+</div>

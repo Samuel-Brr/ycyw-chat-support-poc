@@ -10,7 +10,7 @@ export interface ChatMessage {
   id: number;
   content: string;
   timestamp: Date;
-  sender: 'user' | 'agent';
+  sender: number;
   status: MessageStatus;
   isNew?: boolean;
 }

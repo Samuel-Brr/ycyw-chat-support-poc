@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import {ChatMessage} from "../../../models/chat.models";
 
 @Component({
   selector: 'app-chat-message',
@@ -13,7 +14,16 @@ import { MatIconModule } from '@angular/material/icon';
   ]
 })
 export class ChatMessageComponent {
-  @Input() message: any;
+  @Input() message: ChatMessage = {} as ChatMessage;
+  currentUserId: number;
+
+  constructor() {
+    this.currentUserId = Number.parseFloat(localStorage.getItem('user_id')!);
+  }
+
+  isCurrentUser(message: ChatMessage): boolean {
+    return message.sender === this.currentUserId;
+  }
 
   getStatusIcon(): string {
     switch (this.message.status) {
@@ -24,4 +34,4 @@ export class ChatMessageComponent {
       default: return 'check';
     }
   }
-} 
+}

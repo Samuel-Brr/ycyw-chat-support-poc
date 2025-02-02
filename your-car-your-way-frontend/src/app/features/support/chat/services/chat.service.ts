@@ -35,7 +35,7 @@ export class ChatService {
     return of(Math.floor(Math.random() * 1000) + 1).pipe(delay(500));
   }
 
-  getChatById(chatId: string): Observable<ChatMessage[]> {
+  getChatSessionById(chatSessionId: string): Observable<ChatMessage[]> {
     // Simulate loading chat messages
     return of(this.getMockChatMessages()).pipe(
       delay(1000),
@@ -47,7 +47,7 @@ export class ChatService {
     const newMessage: ChatMessage = {
       id: Math.floor(Math.random() * 1000),
       content,
-      sender: 'user',
+      sender: 2,
       timestamp: new Date(),
       status: 'SENDING'
     };
@@ -73,7 +73,7 @@ export class ChatService {
             const agentResponse: ChatMessage = {
               id: Math.floor(Math.random() * 1000),
               content: this.getRandomAgentResponse(),
-              sender: 'agent',
+              sender: 1,
               timestamp: new Date(),
               status: 'READ'
             };
@@ -94,7 +94,7 @@ export class ChatService {
           id: 1,
           content: 'I understand your concern. Let me check that for you...',
           timestamp: new Date(Date.now() - 5 * 60000),
-          sender: 'agent',
+          sender: 1,
           status: 'READ'
         },
         unreadCount: 2
@@ -106,7 +106,7 @@ export class ChatService {
           id: 2,
           content: 'Hello, I need help with my order #12345',
           timestamp: new Date(Date.now() - 15 * 60000),
-          sender: 'user',
+          sender: 2,
           status: 'DELIVERED'
         },
         unreadCount: 0
@@ -119,7 +119,7 @@ export class ChatService {
           id: 3,
           content: 'Is there anything else I can help you with?',
           timestamp: new Date(Date.now() - 24 * 60 * 60000),
-          sender: 'agent',
+          sender: 1,
           status: 'READ'
         },
         unreadCount: 0
@@ -132,14 +132,14 @@ export class ChatService {
       {
         id: 1,
         content: 'Hello, how can I help you today?',
-        sender: 'agent',
+        sender: 2,
         timestamp: new Date(Date.now() - 5 * 60000),
         status: 'READ'
       },
       {
         id: 2,
         content: 'I have a question about my recent order',
-        sender: 'user',
+        sender: 1,
         timestamp: new Date(Date.now() - 4 * 60000),
         status: 'DELIVERED'
       }

@@ -3,20 +3,6 @@
     <!-- Header Section -->
     <mat-card-header class="chat-header">
       <mat-card-title>Your Car Your Way Support</mat-card-title>
-      <mat-card-subtitle class="agent-info">
-        <ng-container *ngIf="agentName; else connecting">
-          <span class="agent-name">Agent: {{ agentName }}</span>
-          <span class="status-indicator" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-            {{ isConnected ? 'Connected' : 'Disconnected' }}
-          </span>
-        </ng-container>
-        <ng-template #connecting>
-          <span class="connecting-status">
-            <mat-spinner diameter="16"></mat-spinner>
-            Connecting...
-          </span>
-        </ng-template>
-      </mat-card-subtitle>
     </mat-card-header>
 
     <mat-divider></mat-divider>
@@ -29,11 +15,11 @@
           [message]="message"
           [class.new-message]="message.isNew">
         </app-chat-message>
-        
+
         <div *ngIf="isLoading" class="loading-indicator">
           <mat-spinner diameter="40"></mat-spinner>
         </div>
-        
+
         <div *ngIf="error" class="error-message">
           <mat-icon>error_outline</mat-icon>
           <span>{{ error }}</span>
@@ -54,12 +40,12 @@
                (keyup.enter)="sendMessage()">
         <mat-hint *ngIf="!isConnected">Waiting for connection...</mat-hint>
       </mat-form-field>
-      <button mat-fab 
-              color="primary" 
+      <button mat-fab
+              color="primary"
               [disabled]="!isConnected || !newMessage.trim() || isSending"
               (click)="sendMessage()">
         <mat-icon>{{ isSending ? 'hourglass_empty' : 'send' }}</mat-icon>
       </button>
     </mat-card-actions>
   </mat-card>
-</div> 
+</div>

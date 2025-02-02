@@ -77,8 +77,8 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   }
 
   loadChat() {
-    const chatId = this.route.snapshot.paramMap.get('id');
-    if (!chatId) {
+    const chatSessionId = this.route.snapshot.paramMap.get('id');
+    if (!chatSessionId) {
       this.error = 'Invalid chat ID';
       this.isLoading = false;
       return;
@@ -87,7 +87,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.chatService.getChatById(chatId)
+    this.chatService.getChatSessionById(chatSessionId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (messages) => {
