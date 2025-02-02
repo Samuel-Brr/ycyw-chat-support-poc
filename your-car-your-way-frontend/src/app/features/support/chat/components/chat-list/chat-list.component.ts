@@ -114,7 +114,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
   }
 
   startNewChat() {
-    this.chatService.startNewChat()
+    this.chatService.postNewSupportRequest()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (chatId) => {

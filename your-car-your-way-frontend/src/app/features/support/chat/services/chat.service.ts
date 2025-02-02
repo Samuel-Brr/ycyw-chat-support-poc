@@ -52,21 +52,9 @@ export class ChatService {
     });
   }
 
-  startNewChat(): Observable<number> {
+  postNewSupportRequest(): Observable<number> {
     const userId = localStorage.getItem('user_id');
-    return new Observable(observer => {
-      this.rxStomp.watch('/user/queue/chat.created')
-        .subscribe((message: Message) => {
-          const response = JSON.parse(message.body);
-          observer.next(response.chatId);
-          observer.complete();
-        });
-
-      this.rxStomp.publish({
-        destination: '/app/chat.create',
-        body: JSON.stringify({ userId })
-      });
-    });
+    return this.http.post<number>(`${this.API_URL}/support_requests`, {userId: userId});
   }
 
   private getAuthToken() {
