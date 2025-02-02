@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -9,20 +9,14 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
-import {ChatPreviewComponent} from "./chat-preview/chat-preview.component";
-import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-interface ChatPreview {
-  id: number;
-  status: 'NEW' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
-  agentName?: string;
-  lastMessage: {
-    content: string;
-    timestamp: Date;
-  };
-  unreadCount: number;
-}
+import { ChatPreviewComponent } from './chat-preview/chat-preview.component';
+import { ChatService } from '../../services/chat.service';
+import { ChatPreview } from '../../models/chat.models';
 
 @Component({
   selector: 'app-chat-list',
@@ -40,28 +34,61 @@ interface ChatPreview {
     MatInputModule,
     MatFormFieldModule,
     MatButtonToggleModule,
-    ChatPreviewComponent,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    ChatPreviewComponent
   ]
 })
-export class ChatListComponent implements OnInit {
+export class ChatListComponent implements OnInit, OnDestroy {
   conversations: ChatPreview[] = [];
   filteredConversations: ChatPreview[] = [];
   selectedFilter: 'all' | 'active' | 'resolved' = 'all';
   searchQuery: string = '';
   isLoading: boolean = true;
   error: string | null = null;
-  isConnected: boolean = true;
+  isConnected: boolean = false;
 
-  constructor(private router: Router) {}
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private router: Router,
+    private chatService: ChatService
+  ) {}
 
   ngOnInit() {
-    // Simulate loading conversations
-    setTimeout(() => {
-      this.conversations = this.getMockConversations();
-      this.filterConversations();
-      this.isLoading = false;
-    }, 1000);
+    // Subscribe to connection status
+    this.chatService.connectionStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.isConnected = status;
+        if (status) {
+          this.loadConversations();
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  loadConversations() {
+    this.isLoading = true;
+    this.error = null;
+
+    this.chatService.getConversations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (conversations) => {
+          this.conversations = conversations;
+          this.filterConversations();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.error = 'Failed to load conversations. Please try again.';
+          this.isLoading = false;
+          console.error('Error loading conversations:', err);
+        }
+      });
   }
 
   filterConversations() {
@@ -75,7 +102,7 @@ export class ChatListComponent implements OnInit {
 
     if (this.searchQuery) {
       const query = this.searchQuery.toLowerCase();
-      filtered = filtered.filter(conv =>
+      filtered = filtered.filter(conv => 
         conv.lastMessage.content.toLowerCase().includes(query) ||
         (conv.agentName && conv.agentName.toLowerCase().includes(query))
       );
@@ -95,12 +122,22 @@ export class ChatListComponent implements OnInit {
   }
 
   startNewChat() {
-    // Navigate to new chat
-    this.router.navigate(['/chat/new']);
+    this.chatService.startNewChat()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (chatId) => {
+          this.router.navigate(['/chat', chatId]);
+        },
+        error: (err) => {
+          console.error('Error starting new chat:', err);
+          // Handle error (show snackbar, etc.)
+        }
+      });
   }
 
   openChat(chatId: number) {
     this.router.navigate(['/chat', chatId]);
+    console.log('Opening chat', chatId);
   }
 
   getStatusSummary() {
@@ -109,37 +146,7 @@ export class ChatListComponent implements OnInit {
     return { active, unread };
   }
 
-  private getMockConversations(): ChatPreview[] {
-    return [
-      {
-        id: 1,
-        status: 'IN_PROGRESS',
-        agentName: 'John Smith',
-        lastMessage: {
-          content: 'I understand your concern. Let me check that for you...',
-          timestamp: new Date(Date.now() - 5 * 60000)
-        },
-        unreadCount: 2
-      },
-      {
-        id: 2,
-        status: 'NEW',
-        lastMessage: {
-          content: 'Hello, I need help with my order #12345',
-          timestamp: new Date(Date.now() - 15 * 60000)
-        },
-        unreadCount: 0
-      },
-      {
-        id: 3,
-        status: 'RESOLVED',
-        agentName: 'Sarah Johnson',
-        lastMessage: {
-          content: 'Is there anything else I can help you with?',
-          timestamp: new Date(Date.now() - 24 * 60 * 60000)
-        },
-        unreadCount: 0
-      }
-    ];
+  retryConnection() {
+    this.loadConversations();
   }
 }

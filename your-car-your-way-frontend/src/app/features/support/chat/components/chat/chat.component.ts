@@ -1,13 +1,19 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
 import { ChatMessageComponent } from './chat-message/chat-message.component';
+import { ChatService } from '../../services/chat.service';
+import { ChatMessage } from '../../models/chat.models';
 
 @Component({
   selector: 'app-chat',
@@ -26,10 +32,10 @@ import { ChatMessageComponent } from './chat-message/chat-message.component';
     ChatMessageComponent
   ]
 })
-export class ChatComponent implements OnInit, AfterViewChecked {
+export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
-  
-  messages: any[] = [];
+
+  messages: ChatMessage[] = [];
   newMessage: string = '';
   isConnected: boolean = false;
   isLoading: boolean = true;
@@ -37,59 +43,90 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   error: string | null = null;
   agentName: string | null = null;
 
+  private destroy$ = new Subject<void>();
+
+  constructor(
+    private route: ActivatedRoute,
+    private chatService: ChatService
+  ) {}
+
   ngOnInit() {
-    // Simulate initial loading
-    setTimeout(() => {
-      this.isLoading = false;
-      this.isConnected = true;
-      this.agentName = 'John Smith';
-      this.messages = [
-        { id: 1, content: 'Hello, how can I help you today?', sender: 'agent', timestamp: new Date(), status: 'READ' }
-      ];
-    }, 2000);
+    this.chatService.connectionStatus$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(status => {
+        this.isConnected = status;
+        if (status) {
+          this.loadChat();
+        }
+      });
+
+    this.chatService.currentChat$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(messages => {
+        this.messages = messages;
+      });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewChecked() {
     this.scrollToBottom();
   }
 
+  loadChat() {
+    const chatId = this.route.snapshot.paramMap.get('id');
+    if (!chatId) {
+      this.error = 'Invalid chat ID';
+      this.isLoading = false;
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+
+    this.chatService.getChatById(chatId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (messages) => {
+          this.isLoading = false;
+        },
+        error: (err) => {
+          this.error = 'Failed to load chat messages';
+          this.isLoading = false;
+          console.error('Error loading chat:', err);
+        }
+      });
+  }
+
   sendMessage() {
     if (this.newMessage.trim() && !this.isSending) {
       this.isSending = true;
-      const message = {
-        id: this.messages.length + 1,
-        content: this.newMessage,
-        sender: 'user',
-        timestamp: new Date(),
-        status: 'SENDING',
-        isNew: true
-      };
-      
-      this.messages.push(message);
-      this.newMessage = '';
 
-      // Simulate message sending
-      setTimeout(() => {
-        message.status = 'SENT';
-        this.isSending = false;
-        
-        // Simulate delivery status
-        setTimeout(() => {
-          message.status = 'DELIVERED';
-        }, 1000);
-      }, 1000);
+      this.chatService.sendMessage(this.newMessage.trim())
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.newMessage = '';
+            this.isSending = false;
+          },
+          error: (err) => {
+            this.error = 'Failed to send message';
+            this.isSending = false;
+            console.error('Error sending message:', err);
+          }
+        });
     }
-  }
-
-  retryConnection() {
-    this.error = null;
-    this.isLoading = true;
-    // Add your reconnection logic here
   }
 
   private scrollToBottom() {
     try {
       this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
     } catch (err) {}
+  }
+
+  retryConnection() {
   }
 }

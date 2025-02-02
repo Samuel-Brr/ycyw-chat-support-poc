@@ -4,6 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatBadgeModule } from '@angular/material/badge';
+import { ChatPreview } from '../../../models/chat.models';
 
 @Component({
   selector: 'app-chat-preview',
@@ -19,7 +20,7 @@ import { MatBadgeModule } from '@angular/material/badge';
   ]
 })
 export class ChatPreviewComponent {
-  @Input() conversation: any;
+  @Input() conversation!: ChatPreview;
 
   getStatusColor(): string {
     switch (this.conversation.status) {
