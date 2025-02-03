@@ -40,7 +40,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   isSending: boolean = false;
   error: string | null = null;
   agentName: string | null = null;
-  supportRequestId: string = '';
+  chatSessionId: string = '';
 
   private destroy$ = new Subject<void>();
 
@@ -48,7 +48,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
     private route: ActivatedRoute,
     private chatService: ChatService
   ) {
-    this.supportRequestId = this.route.snapshot.paramMap.get('id')!;
+    this.chatSessionId = this.route.snapshot.paramMap.get('id')!;
   }
 
   ngOnInit() {
@@ -66,12 +66,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   loadChatHistoryAndSubscribeToNewMessage() {
     // First, load message history
-    this.chatService.getMessageHistory(this.supportRequestId)
+    this.chatService.getMessageHistory(this.chatSessionId)
       .pipe(
         // After loading history, start listening for new messages
         concatMap(history => {
           this.messages = history.payload;
-          return this.chatService.subscribeToNewMessages(this.supportRequestId);
+          return this.chatService.subscribeToNewMessages(this.chatSessionId);
         })
       )
       .subscribe(newMessage => {
@@ -82,7 +82,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   sendMessage() {
     if (this.newMessage.trim()) {
       // Send the message through the same WebSocket connection
-      this.chatService.sendMessage(this.supportRequestId, this.newMessage);
+      this.chatService.sendMessage(this.chatSessionId, this.newMessage);
       this.newMessage = '';
     }
   }

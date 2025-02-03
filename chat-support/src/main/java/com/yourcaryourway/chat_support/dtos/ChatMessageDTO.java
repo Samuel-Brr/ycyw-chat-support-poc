@@ -1,11 +1,12 @@
 package com.yourcaryourway.chat_support.dtos;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record ChatMessageDTO(
-    Long id,
+    UUID id,
     String content,
     LocalDateTime timestamp,
-    Long sender,
+    UUID sender,
     String status
 ) {} 

@@ -3,6 +3,7 @@ package com.yourcaryourway.chat_support.controller;
 import com.yourcaryourway.chat_support.models.SupportRequestCreationRequest;
 import com.yourcaryourway.chat_support.dtos.SupportRequestsResponse;
 import com.yourcaryourway.chat_support.services.SupportRequestService;
+import com.yourcaryourway.chat_support.dtos.ChatMessagesResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
@@ -37,6 +38,15 @@ public class SupportRequestController {
     public ResponseEntity<SupportRequestsResponse> getUserSupportRequests(
             @PathVariable UUID userId) {
         SupportRequestsResponse response = supportRequestService.getUserSupportRequests(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Get all messages for a chat session")
+    @ApiResponse(responseCode = "200", description = "Chat messages retrieved successfully")
+    @GetMapping("/{chatSessionId}/messages")
+    public ResponseEntity<ChatMessagesResponse> getChatMessages(
+            @PathVariable UUID chatSessionId) {
+        ChatMessagesResponse response = supportRequestService.getChatMessages(chatSessionId);
         return ResponseEntity.ok(response);
     }
 }

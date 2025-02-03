@@ -35,10 +35,53 @@ public class ChatMessage {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MessageStatus status;
+
+    public UUID getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(UUID messageId) {
+        this.messageId = messageId;
+    }
+
+    public ChatSession getChatSession() {
+        return chatSession;
+    }
+
+    public void setChatSession(ChatSession chatSession) {
+        this.chatSession = chatSession;
+    }
+
+    public User getSender() {
+        return sender;
+    }
+
+    public void setSender(User sender) {
+        this.sender = sender;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public MessageStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(MessageStatus status) {
+        this.status = status;
+    }
 }
 
-enum MessageStatus {
-    SENT,
-    DELIVERED,
-    READ
-} 

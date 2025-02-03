@@ -9,13 +9,13 @@ import {Message} from '@stomp/stompjs';
   providedIn: 'root'
 })
 export class ChatService {
-  private readonly API_URL = 'http://localhost:3003/api';
+  private readonly API_URL = 'api';
   private rxStomp: RxStomp;
 
   constructor(private http: HttpClient) {
     this.rxStomp = new RxStomp();
     this.rxStomp.configure({
-      brokerURL: 'ws://localhost:3003/api/chat',
+      brokerURL: 'ws://localhost:3003/chat-websocket',
       connectHeaders: {
         'Authorization': `Bearer ${this.getAuthToken()}`
       }
@@ -29,8 +29,8 @@ export class ChatService {
   }
 
   // Get message history through REST API
-  getMessageHistory(support_requestId: string): Observable<ChatMessages> {
-    return this.http.get<ChatMessages>(`${this.API_URL}/support_requests/${support_requestId}/messages`);
+  getMessageHistory(chatSessionId: string): Observable<ChatMessages> {
+    return this.http.get<ChatMessages>(`${this.API_URL}/support_requests/${chatSessionId}/messages`);
   }
 
   // Subscribe to new messages through WebSocket
@@ -43,7 +43,7 @@ export class ChatService {
   sendMessage(sessionId: string, content: string): void {
     // Send message to the same endpoint we're listening to
     this.rxStomp.publish({
-      destination: `/app/chat/${sessionId}`,
+      destination: `/app/chat/${sessionId}/message`,
       body: JSON.stringify({
         content: content,
         timestamp: new Date(),

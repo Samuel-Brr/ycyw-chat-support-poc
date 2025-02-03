@@ -3,10 +3,12 @@ package com.yourcaryourway.chat_support.services;
 import com.yourcaryourway.chat_support.dtos.ChatMessageDTO;
 import com.yourcaryourway.chat_support.dtos.SupportRequestDTO;
 import com.yourcaryourway.chat_support.dtos.SupportRequestsResponse;
+import com.yourcaryourway.chat_support.dtos.ChatMessagesResponse;
 import com.yourcaryourway.chat_support.models.*;
 import com.yourcaryourway.chat_support.repositories.ChatSessionRepository;
 import com.yourcaryourway.chat_support.repositories.SupportRequestRepository;
 import com.yourcaryourway.chat_support.repositories.UserRepository;
+import com.yourcaryourway.chat_support.repositories.ChatMessageRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +26,13 @@ public class SupportRequestService {
     private final SupportRequestRepository supportRequestRepository;
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
-
-
-    public SupportRequestService(SupportRequestRepository supportRequestRepository, ChatSessionRepository chatSessionRepository, UserRepository userRepository) {
+    public SupportRequestService(SupportRequestRepository supportRequestRepository, ChatSessionRepository chatSessionRepository, UserRepository userRepository, ChatMessageRepository chatMessageRepository) {
         this.supportRequestRepository = supportRequestRepository;
         this.chatSessionRepository = chatSessionRepository;
         this.userRepository = userRepository;
+        this.chatMessageRepository = chatMessageRepository;
     }
 
     /**
@@ -69,7 +71,7 @@ public class SupportRequestService {
     public SupportRequestsResponse getUserSupportRequests(UUID userId) {
         List<SupportRequestDTO> requests = supportRequestRepository.findAllByUserId(userId).stream()
             .map(request -> {
-                ChatMessageDTO lastMessage = new ChatMessageDTO(0L, "Hello", LocalDateTime.now(), 0L, "READ");
+                ChatMessageDTO lastMessage = new ChatMessageDTO(new UUID(0L,0L), "Hello", LocalDateTime.now(), new UUID(0L,0L), "READ");
                 String agentName = request.getAgent() != null ? request.getAgent().getFirstName() : null;
                 int unreadCount = 0;
                 ChatSession chatSession = chatSessionRepository.findBySupportRequest(request);
@@ -85,5 +87,25 @@ public class SupportRequestService {
             .toList();
 
         return new SupportRequestsResponse(requests);
+    }
+
+    public ChatMessagesResponse getChatMessages(UUID chatSessionId) {
+        logger.info("Fetching messages for chat session: {}", chatSessionId);
+        
+        ChatSession chatSession = chatSessionRepository.findById(chatSessionId)
+            .orElseThrow(() -> new RuntimeException("Chat session not found"));
+
+        List<ChatMessageDTO> messages = chatMessageRepository.findByChatSessionOrderByTimestampAsc(chatSession)
+            .stream()
+            .map(message -> new ChatMessageDTO(
+                message.getMessageId(),
+                message.getContent(),
+                message.getTimestamp(),
+                message.getSender().getId(),
+                "DEFAULT"
+            ))
+            .toList();
+
+        return new ChatMessagesResponse(messages);
     }
 } 
