@@ -30,7 +30,7 @@ public class ChatMessageService {
      * Saves a new chat message and updates related entities
      */
     @Transactional
-    public ChatMessage saveMessage(ChatMessageDTO messageDTO, UUID sessionId, UUID senderId) {
+    public ChatMessageDTO saveMessage(ChatMessageDTO messageDTO, UUID sessionId, UUID senderId) {
         // Validate the chat session is active
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .filter(s -> s.getStatus() == SessionStatus.ACTIVE)
@@ -43,9 +43,15 @@ public class ChatMessageService {
         message.setContent(messageDTO.content());
         message.setStatus(MessageStatus.SENT);
 
-        // Update session's last activity timestamp
-        chatSessionRepository.save(session);
+        ChatMessage savedMessage = chatMessageRepository.save(message);
 
-        return chatMessageRepository.save(message);
+        // Convert to DTO and return
+        return new ChatMessageDTO(
+            savedMessage.getMessageId(),
+            savedMessage.getContent(),
+            savedMessage.getTimestamp(),
+            savedMessage.getSender().getId(),
+            savedMessage.getStatus().toString()
+        );
     }
 }

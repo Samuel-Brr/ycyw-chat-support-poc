@@ -19,6 +19,14 @@ export interface ChatMessage {
   isNew?: boolean;
 }
 
+export interface ChatMessageDTO {
+  id?: string;
+  content: string;
+  timestamp: string;
+  sender?: string;
+  status?: string;
+}
+
 export interface ChatMessages {
   payload: ChatMessage[];
 }

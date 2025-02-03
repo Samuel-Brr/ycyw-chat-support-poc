@@ -1,9 +1,8 @@
 import {Injectable} from '@angular/core';
 import {map, Observable} from 'rxjs';
-import {ChatMessage, ChatMessages, SupportRequests} from '../models/chat.models';
+import {ChatMessage, ChatMessageDTO, ChatMessages, SupportRequests} from '../models/chat.models';
 import {HttpClient} from '@angular/common/http';
-import {RxStomp} from '@stomp/rx-stomp';
-import {Message} from '@stomp/stompjs';
+import {RxStomp, RxStompConfig} from '@stomp/rx-stomp';
 
 @Injectable({
   providedIn: 'root'
@@ -14,12 +13,38 @@ export class ChatService {
 
   constructor(private http: HttpClient) {
     this.rxStomp = new RxStomp();
-    this.rxStomp.configure({
+    const stompConfig: RxStompConfig = {
       brokerURL: 'ws://localhost:3003/chat-websocket',
+
       connectHeaders: {
-        'Authorization': `Bearer ${this.getAuthToken()}`
+        Authorization: `Bearer ${this.getAuthToken()}`
+      },
+
+      heartbeatIncoming: 0,
+      heartbeatOutgoing: 20000,
+      reconnectDelay: 5000,
+
+      debug: (msg: string): void => {
+        console.log(new Date(), msg);
       }
+    };
+
+    this.rxStomp.configure(stompConfig);
+
+    // Add connection status handlers
+    this.rxStomp.connected$.subscribe(() => {
+      console.log('Connected to WebSocket');
     });
+
+    this.rxStomp.connectionState$.subscribe(state => {
+      console.log('WebSocket connection state:', state);
+    });
+
+    // Handle connection errors
+    this.rxStomp.stompErrors$.subscribe(error => {
+      console.error('STOMP error:', error);
+    });
+
     this.rxStomp.activate();
   }
 
@@ -41,14 +66,17 @@ export class ChatService {
   }
 
   sendMessage(sessionId: string, content: string): void {
-    // Send message to the same endpoint we're listening to
+    const messageDTO: ChatMessageDTO = {
+      content: content,
+      timestamp: new Date().toISOString(),
+    };
+
     this.rxStomp.publish({
       destination: `/app/chat/${sessionId}/message`,
-      body: JSON.stringify({
-        content: content,
-        timestamp: new Date(),
-        // Add other message properties
-      })
+      body: JSON.stringify(messageDTO),
+      headers: {
+        'simpUser': localStorage.getItem('user_id') || ''
+      }
     });
   }
 

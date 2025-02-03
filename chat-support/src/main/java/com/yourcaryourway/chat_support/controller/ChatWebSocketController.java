@@ -25,7 +25,7 @@ public class ChatWebSocketController {
      */
     @MessageMapping("/chat/{sessionId}/message")
     @SendTo("/topic/chat/{sessionId}")
-    public ChatMessage handleChatMessage(@DestinationVariable UUID sessionId,
+    public ChatMessageDTO handleChatMessage(@DestinationVariable UUID sessionId,
                                   @Payload ChatMessageDTO message,
                                   @Header("simpUser") String userId) {
         log.debug("Received message for session {}: {}", sessionId, message);
