@@ -1,7 +1,6 @@
 package com.yourcaryourway.chat_support.controller;
 
 import com.yourcaryourway.chat_support.dtos.ChatMessageDTO;
-import com.yourcaryourway.chat_support.models.ChatMessage;
 import com.yourcaryourway.chat_support.services.ChatMessageService;
 import org.slf4j.Logger;
 import org.springframework.messaging.handler.annotation.*;

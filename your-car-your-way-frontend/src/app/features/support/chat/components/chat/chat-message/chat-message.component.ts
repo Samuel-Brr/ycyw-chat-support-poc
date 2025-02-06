@@ -15,14 +15,14 @@ import {ChatMessage} from "../../../models/chat.models";
 })
 export class ChatMessageComponent {
   @Input() message: ChatMessage = {} as ChatMessage;
-  currentUserId: number;
+  currentUserId: string | null;
 
   constructor() {
-    this.currentUserId = Number.parseFloat(localStorage.getItem('user_id')!);
+    this.currentUserId = localStorage.getItem('user_id');
   }
 
   isCurrentUser(message: ChatMessage): boolean {
-    return message.sender === this.currentUserId;
+    return message.sender.toString() === this.currentUserId;
   }
 
   getStatusIcon(): string {
