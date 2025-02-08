@@ -10,15 +10,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 
 /**
  * Service responsible for JWT (JSON Web Token) operations.
@@ -31,6 +29,7 @@ public class JwtService {
 
     private final JwtEncoder jwtEncoder;
     private final UserRepository userRepository;
+    private final JwtDecoder jwtDecoder;
 
     @Value("${jwt.issuer}")
     private String jwtIssuer;
@@ -38,9 +37,10 @@ public class JwtService {
     @Value("${jwt.expiration.hours}")
     private long jwtExpirationHours;
 
-    public JwtService(JwtEncoder jwtEncoder, UserRepository userRepository) {
+    public JwtService(JwtEncoder jwtEncoder, UserRepository userRepository, JwtDecoder jwtDecoder) {
         this.jwtEncoder = jwtEncoder;
         this.userRepository = userRepository;
+        this.jwtDecoder = jwtDecoder;
     }
 
     /**
@@ -101,5 +101,17 @@ public class JwtService {
                     logger.error("User not found for email: {}", email);
                     return new UsernameNotFoundException("User not found for email: " + email);
                 });
+    }
+
+    public Authentication getAuthenticationFromToken(String token) {
+        try {
+            Jwt jwt = jwtDecoder.decode(token);
+            String subject = jwt.getSubject();
+            User user = userRepository.findByEmail(subject)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            return new UsernamePasswordAuthenticationToken(user.getEmail(), user.getPassword());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid JWT token", e);
+        }
     }
 }

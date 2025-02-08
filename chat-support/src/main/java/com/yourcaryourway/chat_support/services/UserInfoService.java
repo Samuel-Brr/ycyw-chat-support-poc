@@ -69,4 +69,13 @@ public class UserInfoService implements UserDetailsService {
         logger.info("User added successfully: {}", savedUser.getId());
         return savedUser.getId();
     }
+
+    public User getUserByEmail(String email) {
+        logger.debug("Attempting to retrieve user by email: {}", email);
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> {
+                    logger.warn("User not found: {}", email);
+                    return new UsernameNotFoundException("User not found: " + email);
+                });
+    }
 }

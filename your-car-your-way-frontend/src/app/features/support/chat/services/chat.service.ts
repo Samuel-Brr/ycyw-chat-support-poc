@@ -74,9 +74,6 @@ export class ChatService {
     this.rxStomp.publish({
       destination: `/app/chat/${sessionId}/message`,
       body: JSON.stringify(messageDTO),
-      headers: {
-        'simpUser': localStorage.getItem('user_id') || ''
-      }
     });
   }
 
