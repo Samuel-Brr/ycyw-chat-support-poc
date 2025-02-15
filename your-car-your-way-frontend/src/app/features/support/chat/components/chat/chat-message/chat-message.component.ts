@@ -24,14 +24,4 @@ export class ChatMessageComponent {
   isCurrentUser(message: ChatMessage): boolean {
     return message.sender.toString() === this.currentUserId;
   }
-
-  getStatusIcon(): string {
-    switch (this.message.status) {
-      case 'SENDING': return 'schedule';
-      case 'SENT': return 'check';
-      case 'DELIVERED': return 'done_all';
-      case 'READ': return 'done_all';
-      default: return 'check';
-    }
-  }
 }

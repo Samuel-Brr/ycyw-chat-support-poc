@@ -38,7 +38,6 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   newMessage: string = '';
   isSending: boolean = false;
   error: string | null = null;
-  agentName: string | null = null;
   chatSessionId: string = '';
 
   private destroy$ = new Subject<void>();

@@ -137,8 +137,4 @@ export class ChatListComponent implements OnInit, OnDestroy {
     const unread = this.conversations.reduce((sum, conv) => sum + conv.unreadCount, 0);
     return { active, unread };
   }
-
-  retryConnection() {
-    this.loadConversations();
-  }
 }
