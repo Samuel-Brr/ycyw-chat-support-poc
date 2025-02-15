@@ -107,27 +107,6 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "Get current user credentials", description = "Retrieves the details of the currently authenticated user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Successfully retrieved user details",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Credential.class))),
-            @ApiResponse(responseCode = "401", description = "Not authenticated"),
-            @ApiResponse(responseCode = "404", description = "User not found")
-    })
-    @GetMapping(value = "/credentials", produces = MediaType.APPLICATION_JSON_VALUE)
-    @SecurityRequirement(name = "Bearer Authentication")
-    public ResponseEntity<Credential> getCurrentUser() {
-        try {
-            User currentUser = jwtService.getCurrentUser();
-            Credential credential = new Credential(currentUser.getFirstName(), currentUser.getEmail());
-            logger.info("Retrieved current user: {}", currentUser.getEmail());
-            return ResponseEntity.ok(credential);
-        } catch (Exception e) {
-            logger.error("Error retrieving current user: {}", e.getMessage());
-            throw new RuntimeException(FAILED_TO_RETRIEVE_CURRENT_USER);
-        }
-    }
 
     private String authenticateAndGetToken(String email, String password) {
         Authentication authentication = authenticationManager.authenticate(
