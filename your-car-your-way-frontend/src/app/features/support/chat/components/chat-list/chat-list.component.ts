@@ -15,7 +15,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { ChatPreviewComponent } from './chat-preview/chat-preview.component';
-import { ChatService } from '../../services/chat.service';
+import { SupportService } from '../../../../../shared/services/support.service';
 import { ChatPreview } from '../../models/chat.models';
 
 @Component({
@@ -51,7 +51,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private chatService: ChatService
+    private supportService: SupportService
   ) {}
 
   ngOnInit() {
@@ -67,7 +67,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.chatService.getSupportRequestPreviews()
+    this.supportService.getSupportRequestPreviews()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (conversations) => {
@@ -114,7 +114,7 @@ export class ChatListComponent implements OnInit, OnDestroy {
   }
 
   startNewChat() {
-    this.chatService.postNewSupportRequest()
+    this.supportService.postNewSupportRequest()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (chatId) => {

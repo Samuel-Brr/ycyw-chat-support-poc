@@ -1,18 +1,23 @@
 import {Injectable} from '@angular/core';
 import {map, Observable} from 'rxjs';
-import {ChatMessage, ChatMessageDTO, ChatMessages, SupportRequests} from '../models/chat.models';
+import {ChatMessage, ChatMessageDTO, ChatMessages, SupportRequests} from '../../features/support/chat/models/chat.models';
 import {HttpClient} from '@angular/common/http';
 import {RxStomp, RxStompConfig} from '@stomp/rx-stomp';
 
 @Injectable({
   providedIn: 'root'
 })
-export class ChatService {
+export class SupportService {
   private readonly API_URL = 'api';
   private rxStomp: RxStomp;
 
   constructor(private http: HttpClient) {
     this.rxStomp = new RxStomp();
+    this.activateStomp();
+  }
+
+  private activateStomp() {
+
     const stompConfig: RxStompConfig = {
       brokerURL: 'ws://localhost:3003/chat-websocket',
 

@@ -1,19 +1,18 @@
-import { Component, ViewChild, ElementRef, AfterViewChecked, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import {AfterViewChecked, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {CommonModule} from '@angular/common';
+import {FormsModule} from '@angular/forms';
+import {ActivatedRoute} from '@angular/router';
+import {MatCardModule} from '@angular/material/card';
+import {MatInputModule} from '@angular/material/input';
+import {MatButtonModule} from '@angular/material/button';
+import {MatIconModule} from '@angular/material/icon';
+import {MatDividerModule} from '@angular/material/divider';
+import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {concatMap, Subject} from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
-import { ChatMessageComponent } from './chat-message/chat-message.component';
-import { ChatService } from '../../services/chat.service';
-import { ChatMessage } from '../../models/chat.models';
+import {ChatMessageComponent} from './chat-message/chat-message.component';
+import {SupportService} from '../../../../../shared/services/support.service';
+import {ChatMessage} from '../../models/chat.models';
 
 @Component({
   selector: 'app-chat',
@@ -46,7 +45,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   constructor(
     private route: ActivatedRoute,
-    private chatService: ChatService
+    private supportService: SupportService
   ) {
     this.chatSessionId = this.route.snapshot.paramMap.get('id')!;
   }
@@ -66,12 +65,12 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
 
   loadChatHistoryAndSubscribeToNewMessage() {
     // First, load message history
-    this.chatService.getMessageHistory(this.chatSessionId)
+    this.supportService.getMessageHistory(this.chatSessionId)
       .pipe(
         // After loading history, start listening for new messages
         concatMap(history => {
           this.messages = history.payload;
-          return this.chatService.subscribeToNewMessages(this.chatSessionId);
+          return this.supportService.subscribeToNewMessages(this.chatSessionId);
         })
       )
       .subscribe(newMessage => {
@@ -82,7 +81,7 @@ export class ChatComponent implements OnInit, AfterViewChecked, OnDestroy {
   sendMessage() {
     if (this.newMessage.trim()) {
       // Send the message through the same WebSocket connection
-      this.chatService.sendMessage(this.chatSessionId, this.newMessage);
+      this.supportService.sendMessage(this.chatSessionId, this.newMessage);
       this.newMessage = '';
     }
   }
