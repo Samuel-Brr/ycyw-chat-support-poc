@@ -55,6 +55,8 @@ Les fonctionnalités suivantes ne seront pas incluses dans la POC :
 - API REST complète pour les agences
 - Tests unitaires et tests d'intégration complets
 - Infrastructure de déploiement et de mise à l'échelle
+- RGPD et conformité à la protection des données
+- HTTPS et certificats SSL
 
 ## 4. Exigences Techniques
 
